@@ -27,8 +27,17 @@ client.on("error", (err) => {
 app.get("/", (req, res) => {
   res.send("Home Automation Bridge Running");
 });
-
 app.post("/relay", (req, res) => {
+
+  // API Key Validation
+  const apiKey = req.headers["x-api-key"];
+
+  if (apiKey !== "GIRI123456") {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized"
+    });
+  }
 
   const room = req.body.room;
   const relay = req.body.relay;
@@ -45,6 +54,8 @@ app.post("/relay", (req, res) => {
   });
 
 });
+
+);
 
 const PORT = process.env.PORT || 3000;
 
