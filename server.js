@@ -38,14 +38,16 @@ app.post("/relay", (req, res) => {
       message: "Unauthorized"
     });
   }
+const espCode = req.body.espCode;
+const relay = req.body.relay;
+const state = req.body.state;
 
-  const room = req.body.room;
-  const relay = req.body.relay;
-  const state = req.body.state;
+const topic = `home/${espCode}/cmd`;
 
-  const topic = `home/${room}/relay${relay}`;
-
-  client.publish(topic, state);
+client.publish(topic, JSON.stringify({
+    relay: relay,
+    state: state
+}));
 
   res.json({
     success: true,
