@@ -21,15 +21,14 @@ client.on("connect", () => {
 });
 
 client.on("error", (err) => {
-  console.log(err);
+  console.log("MQTT Error:", err);
 });
 
 app.get("/", (req, res) => {
   res.send("Home Automation Bridge Running");
 });
-app.post("/relay", (req, res) => {
 
-  // API Key Validation
+app.post("/relay", (req, res) => {
   const apiKey = req.headers["x-api-key"];
 
   if (apiKey !== "GIRI123456") {
@@ -38,26 +37,29 @@ app.post("/relay", (req, res) => {
       message: "Unauthorized"
     });
   }
-const espCode = req.body.espCode;
-const relay = req.body.relay;
-const state = req.body.state;
 
-const topic = `home/${espCode}/relay${relay}`;
+  const espCode = req.body.espCode;
+  const relay = Number(req.body.relay);
+  const state = String(req.body.state).toUpperCase();
 
-client.publish(topic, JSON.stringify({
-    relay: relay,
-    state: state
-}));
+  if (!espCode || relay < 1 || relay > 8 || !["ON", "OFF"].includes(state)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid espCode, relay, or state"
+    });
+  }
+
+  const topic = `home/${espCode}/relay${relay}`;
+
+  // ESP32 code expects plain "ON" or "OFF"
+  client.publish(topic, state);
 
   res.json({
     success: true,
     topic: topic,
     state: state
   });
-
 });
-
-);
 
 const PORT = process.env.PORT || 3000;
 
