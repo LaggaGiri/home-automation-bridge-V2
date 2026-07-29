@@ -42,7 +42,7 @@ const espCode = req.body.espCode;
 const relay = req.body.relay;
 const state = req.body.state;
 
-const topic = `home/${espCode}/cmd`;
+const topic = `home/${espCode}/relay${relay}`;
 
 client.publish(topic, JSON.stringify({
     relay: relay,
