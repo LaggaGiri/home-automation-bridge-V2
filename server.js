@@ -11,7 +11,7 @@ app.use(express.json());
 const client = mqtt.connect(
   "mqtts://bd677f2b30e04a8386c8e8295200a313.s1.eu.hivemq.cloud:8883",
   {
-    username: "Giri@home.com",
+    username: "girihomelive.com",
     password: "AMMAnanna@9550"
   }
 );
