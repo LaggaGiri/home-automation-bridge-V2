@@ -3,10 +3,6 @@ const mqtt = require("mqtt");
 
 const app = express();
 
-// ========================================
-// Express
-// ========================================
-
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
@@ -29,10 +25,10 @@ const MQTT_PASSWORD =
 // ========================================
 
 const MQTT_TOPIC =
-  "esp32/ESP001/test";
+  "home/ESP001/command";
 
 // ========================================
-// Startup Information
+// Startup
 // ========================================
 
 console.log("----------------------------------------");
@@ -40,44 +36,29 @@ console.log("ESP32 MQTT BRIDGE");
 console.log("----------------------------------------");
 
 console.log(
-  "MQTT Username configured:",
-  !!MQTT_USERNAME
+    "MQTT Username configured:",
+    !!MQTT_USERNAME
 );
 
 console.log(
-  "MQTT Password configured:",
-  !!MQTT_PASSWORD
+    "MQTT Password configured:",
+    !!MQTT_PASSWORD
 );
-
-// ========================================
-// Validate Credentials
-// ========================================
-
-if (!MQTT_USERNAME || !MQTT_PASSWORD) {
-
-  console.error(
-    "ERROR: MQTT_USERNAME or MQTT_PASSWORD is missing."
-  );
-
-}
 
 // ========================================
 // MQTT Client
 // ========================================
 
-const mqttClient = mqtt.connect(MQTT_HOST, {
-
-  username: MQTT_USERNAME,
-
-  password: MQTT_PASSWORD,
-
-  protocol: "mqtts",
-
-  port: 8883,
-
-  reconnectPeriod: 5000
-
-});
+const mqttClient = mqtt.connect(
+    MQTT_HOST,
+    {
+        username: MQTT_USERNAME,
+        password: MQTT_PASSWORD,
+        protocol: "mqtts",
+        port: 8883,
+        reconnectPeriod: 5000
+    }
+);
 
 // ========================================
 // MQTT Connected
@@ -85,18 +66,18 @@ const mqttClient = mqtt.connect(MQTT_HOST, {
 
 mqttClient.on("connect", () => {
 
-  console.log("----------------------------------------");
+    console.log("----------------------------------------");
 
-  console.log(
-    "CONNECTED TO HIVEMQ"
-  );
+    console.log(
+        "CONNECTED TO HIVEMQ"
+    );
 
-  console.log("----------------------------------------");
+    console.log("----------------------------------------");
 
-  console.log(
-    "MQTT Topic:",
-    MQTT_TOPIC
-  );
+    console.log(
+        "MQTT Topic:",
+        MQTT_TOPIC
+    );
 
 });
 
@@ -106,34 +87,22 @@ mqttClient.on("connect", () => {
 
 mqttClient.on("error", (error) => {
 
-  console.error(
-    "MQTT ERROR:",
-    error.message
-  );
+    console.error(
+        "MQTT ERROR:",
+        error.message
+    );
 
 });
 
 // ========================================
-// MQTT Reconnecting
+// MQTT Reconnect
 // ========================================
 
 mqttClient.on("reconnect", () => {
 
-  console.log(
-    "Reconnecting to HiveMQ..."
-  );
-
-});
-
-// ========================================
-// MQTT Offline
-// ========================================
-
-mqttClient.on("offline", () => {
-
-  console.log(
-    "MQTT client is offline."
-  );
+    console.log(
+        "Reconnecting to HiveMQ..."
+    );
 
 });
 
@@ -143,17 +112,18 @@ mqttClient.on("offline", () => {
 
 app.get("/", (req, res) => {
 
-  res.status(200).json({
+    res.status(200).json({
 
-    success: true,
+        success: true,
 
-    service: "ESP32 MQTT Bridge",
+        service: "ESP32 MQTT Bridge",
 
-    status: "running",
+        status: "running",
 
-    mqttConnected: mqttClient.connected
+        mqttConnected:
+            mqttClient.connected
 
-  });
+    });
 
 });
 
@@ -163,15 +133,16 @@ app.get("/", (req, res) => {
 
 app.get("/mqtt-status", (req, res) => {
 
-  res.status(200).json({
+    res.status(200).json({
 
-    success: true,
+        success: true,
 
-    mqttConnected: mqttClient.connected,
+        mqttConnected:
+            mqttClient.connected,
 
-    topic: MQTT_TOPIC
+        topic: MQTT_TOPIC
 
-  });
+    });
 
 });
 
@@ -181,137 +152,157 @@ app.get("/mqtt-status", (req, res) => {
 
 app.post("/message", (req, res) => {
 
-  console.log();
-  console.log("----------------------------------------");
-  console.log("POST REQUEST RECEIVED");
-  console.log("----------------------------------------");
+    console.log();
 
-  console.log("Request Body:");
-  console.log(req.body);
-
-  // ======================================
-  // Check MQTT Connection
-  // ======================================
-
-  if (!mqttClient.connected) {
-
-    console.error(
-      "MQTT broker is not connected."
+    console.log(
+        "========================================"
     );
 
-    return res.status(503).json({
+    console.log(
+        "POST REQUEST RECEIVED"
+    );
 
-      success: false,
+    console.log(
+        "========================================"
+    );
 
-      error: "MQTT broker is not connected"
+    console.log(
+        "Request Body:"
+    );
 
-    });
+    console.log(
+        JSON.stringify(req.body, null, 2)
+    );
 
-  }
+    // ====================================
+    // Check MQTT Connection
+    // ====================================
 
-  // ======================================
-  // Get Message
-  // ======================================
-
-  const message = req.body.message;
-
-  if (
-    message === undefined ||
-    message === null
-  ) {
-
-    return res.status(400).json({
-
-      success: false,
-
-      error: "message is required"
-
-    });
-
-  }
-
-  // ======================================
-  // Convert Message to String
-  // ======================================
-
-  let mqttMessage;
-
-  if (typeof message === "string") {
-
-    mqttMessage = message;
-
-  } else {
-
-    mqttMessage =
-      JSON.stringify(message);
-
-  }
-
-  // ======================================
-  // Publish MQTT
-  // ======================================
-
-  mqttClient.publish(
-
-    MQTT_TOPIC,
-
-    mqttMessage,
-
-    {
-      qos: 0,
-      retain: false
-    },
-
-    (error) => {
-
-      if (error) {
+    if (!mqttClient.connected) {
 
         console.error(
-          "MQTT Publish Error:",
-          error.message
+            "MQTT broker is not connected."
         );
 
-        return res.status(500).json({
+        return res.status(503).json({
 
-          success: false,
+            success: false,
 
-          error:
-            "Failed to publish MQTT message"
+            error:
+                "MQTT broker is not connected"
 
         });
 
-      }
+    }
 
-      console.log();
-      console.log("----------------------------------------");
-      console.log("MQTT MESSAGE PUBLISHED");
-      console.log("----------------------------------------");
+    // ====================================
+    // Get Message
+    // ====================================
 
-      console.log(
-        "Topic:",
-        MQTT_TOPIC
-      );
+    const message =
+        req.body.message;
 
-      console.log(
-        "Message:",
-        mqttMessage
-      );
+    if (
+        message === undefined ||
+        message === null
+    ) {
 
-      console.log("----------------------------------------");
+        return res.status(400).json({
 
-      return res.status(200).json({
+            success: false,
 
-        success: true,
+            error:
+                "message is required"
 
-        topic: MQTT_TOPIC,
-
-        message: mqttMessage
-
-      });
+        });
 
     }
 
-  );
+    // ====================================
+    // Convert Message to String
+    // ====================================
+
+    let mqttMessage;
+
+    if (
+        typeof message === "string"
+    ) {
+
+        mqttMessage = message;
+
+    } else {
+
+        mqttMessage =
+            JSON.stringify(message);
+
+    }
+
+    // ====================================
+    // Publish MQTT
+    // ====================================
+
+    mqttClient.publish(
+
+        MQTT_TOPIC,
+
+        mqttMessage,
+
+        {
+            qos: 0,
+            retain: false
+        },
+
+        (error) => {
+
+            if (error) {
+
+                console.error(
+                    "MQTT Publish Error:",
+                    error.message
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    error:
+                        "Failed to publish MQTT message"
+
+                });
+
+            }
+
+            console.log();
+
+            console.log(
+                "MQTT MESSAGE PUBLISHED"
+            );
+
+            console.log(
+                "Topic:",
+                MQTT_TOPIC
+            );
+
+            console.log(
+                "Message:",
+                mqttMessage
+            );
+
+            console.log();
+
+            return res.status(200).json({
+
+                success: true,
+
+                topic: MQTT_TOPIC,
+
+                message: mqttMessage
+
+            });
+
+        }
+
+    );
 
 });
 
@@ -321,13 +312,14 @@ app.post("/message", (req, res) => {
 
 app.use((req, res) => {
 
-  res.status(404).json({
+    res.status(404).json({
 
-    success: false,
+        success: false,
 
-    error: "Endpoint not found"
+        error:
+            "Endpoint not found"
 
-  });
+    });
 
 });
 
@@ -337,13 +329,18 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
 
-  console.log();
-  console.log("----------------------------------------");
+    console.log();
 
-  console.log(
-    `Server running on port ${PORT}`
-  );
+    console.log(
+        "========================================"
+    );
 
-  console.log("----------------------------------------");
+    console.log(
+        `Server running on port ${PORT}`
+    );
+
+    console.log(
+        "========================================"
+    );
 
 });
